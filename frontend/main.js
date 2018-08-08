@@ -1,13 +1,11 @@
 const {app, BrowserWindow, ipcMain, protocol} = require('electron');
-const envVariables = require('./env-variables');
-const crypto = require('crypto');
 const request = require('request');
 const url = require('url');
+const envVariables = require('./env-variables');
+const loadAuthProcess = require('./main/auth-process');
+const authService = require('./service/auth-service');
 
-const {apiIdentifier, auth0Domain, clientId} = envVariables;
-
-const verifier = base64URLEncode(crypto.randomBytes(32));
-const challenge = base64URLEncode(sha256(verifier));
+const {appDomain, appScheme, auth0Domain, clientId} = envVariables;
 
 let accessToken = null;
 let refreshToken = null;
@@ -16,18 +14,16 @@ let idToken = null;
 // you will need a custom scheme so Auth0 can redirect to this scheme+domain after authentication
 // i.e. `file://home.html` won't work because Auth0 appends a hash to the callback URL and Electron
 // will think it has to load a file called (e.g.) `home.html#access_token=123...`
-const customScheme = 'custom-scheme';
-const customDomain = 'custom-domain';
-const redirectUri = `${customScheme}://${customDomain}/callback`;
+const redirectUri = `${appScheme}://${appDomain}/callback`;
 
 // needed, otherwise localstorage, sessionstorage, cookies, etc, become unavailable
 // https://electronjs.org/docs/api/protocol#methods
-protocol.registerStandardSchemes([customScheme]);
+protocol.registerStandardSchemes([appScheme]);
 
 function showWindow() {
 
-  protocol.registerFileProtocol(customScheme, (req, callback) => {
-    const requestedURL = req.url.replace(`${customScheme}://${customDomain}/`, '').substring(0, req.url.length - 1);
+  protocol.registerFileProtocol(appScheme, (req, callback) => {
+    const requestedURL = req.url.replace(`${appScheme}://${appDomain}/`, '').substring(0, req.url.length - 1);
 
     if (requestedURL.indexOf('callback') === 0) {
       return triggerHome(requestedURL);
@@ -36,7 +32,7 @@ function showWindow() {
     callback(`${__dirname}/renderer/${requestedURL}`);
   }, console.error);
 
-  triggerAuthentication();
+  loadAuthProcess();
 }
 
 // This method will be called when Electron has finished
@@ -68,7 +64,7 @@ function triggerHome(requestedURL) {
   const exchangeOptions = {
     'grant_type': 'authorization_code',
     'client_id': clientId,
-    'code_verifier': verifier,
+    'code_verifier': authService.verifier,
     'code': query.code,
     'redirect_uri': redirectUri,
   };
@@ -123,54 +119,6 @@ function triggerHome(requestedURL) {
       event.sender.close();
     });
 
-    win.loadURL(`${customScheme}://${customDomain}/home.html`);
+    win.loadURL(`${appScheme}://${appDomain}/home.html`);
   });
-}
-
-function triggerAuthentication() {
-  // Create the browser window.
-  const win = new BrowserWindow({
-    width: 1000,
-    height: 600,
-    webPreferences: {
-      nodeIntegration: false,
-    },
-  });
-
-  const authenticated = false;
-  if (!authenticated) {
-
-    const authorizationUrl = 'https://' + auth0Domain + '/authorize?' +
-      'audience=' + apiIdentifier + '&' +
-      'scope=openid profile offline_access&' +
-      'response_type=code&' +
-      'client_id=' + clientId + '&' +
-      'code_challenge=' + challenge + '&' +
-      'code_challenge_method=S256&' +
-      'redirect_uri=' + redirectUri;
-
-    win.loadURL(authorizationUrl);
-  }
-
-  // Open the DevTools.
-  win.webContents.openDevTools();
-
-  // Emitted when the window is closed.
-  win.on('closed', () => {
-    // Dereference the window object, usually you would store windows
-    // in an array if your app supports multi windows, this is the time
-    // when you should delete the corresponding element.
-    // win = null;
-  });
-}
-
-function base64URLEncode(str) {
-  return str.toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
-}
-
-function sha256(buffer) {
-  return crypto.createHash('sha256').update(buffer).digest();
 }

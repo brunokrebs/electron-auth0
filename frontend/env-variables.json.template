@@ -1,5 +1,7 @@
 {
   "apiIdentifier": "https://electron-app-api.com/",
+  "appDomain": "custom-domain",
+  "appScheme": "custom-scheme",
   "auth0Domain": "bk-tmp.auth0.com",
   "clientId": "SZn...IVm"
 }
