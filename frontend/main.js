@@ -1,5 +1,17 @@
 const {app, BrowserWindow, ipcMain, protocol} = require('electron');
 const envVariables = require('./env-variables');
+const crypto = require('crypto');
+const request = require('request');
+const url = require('url');
+
+const {apiIdentifier, auth0Domain, clientId} = envVariables;
+
+const verifier = base64URLEncode(crypto.randomBytes(32));
+const challenge = base64URLEncode(sha256(verifier));
+
+let accessToken = null;
+let refreshToken = null;
+let idToken = null;
 
 let win;
 
@@ -8,6 +20,7 @@ let win;
 // will think it has to load a file called (e.g.) `home.html#access_token=123...`
 const customScheme = 'custom-scheme';
 const customDomain = 'custom-domain';
+const redirectUri = `${customScheme}://${customDomain}/callback`;
 
 // needed, otherwise localstorage, sessionstorage, cookies, etc, become unavailable
 // https://electronjs.org/docs/api/protocol#methods
@@ -15,15 +28,60 @@ protocol.registerStandardSchemes([customScheme]);
 
 function showWindow() {
 
-  protocol.registerFileProtocol(customScheme, (request, callback) => {
-    const url = request.url.replace(`${customScheme}://${customDomain}/`, '').substring(0, request.url.length - 1);
+  protocol.registerFileProtocol(customScheme, (req, callback) => {
+    const urlRequested = req.url.replace(`${customScheme}://${customDomain}/`, '').substring(0, req.url.length - 1);
 
-    if (url.indexOf('home.html') === 0) {
-      // needed, cause Auth0 includes '#code=9Zg...' on the callback URL
-      return callback(`${__dirname}/renderer/home.html`);
+    if (urlRequested.indexOf('callback') === 0) {
+      win.close();
+      const urlParts = url.parse(urlRequested, true);
+      const query = urlParts.query;
+
+      const exchangeOptions = {
+        'grant_type': 'authorization_code',
+        'client_id': clientId,
+        'code_verifier': verifier,
+        'code': query.code,
+        'redirect_uri': redirectUri,
+      };
+
+      const options = {
+        method: 'POST',
+        url: `https://${auth0Domain}/oauth/token`,
+        headers: {
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify(exchangeOptions),
+      };
+
+      request(options, function (error, resp, body) {
+        if (error) throw new Error(error);
+
+        win = new BrowserWindow({
+          width: 1000,
+          height: 600,
+        });
+
+        const responseBody = JSON.parse(body);
+        accessToken = responseBody.access_token;
+        idToken = responseBody.id_token;
+        refreshToken = responseBody.refresh_token;
+
+        ipcMain.on('loaded', () => {
+          win.webContents.send('globalProps', {
+            idToken,
+          });
+        });
+
+        win.loadURL(`${customScheme}://${customDomain}/home.html`);
+      });
+
+      return;
     }
 
-    callback(`${__dirname}/renderer/${url}`);
+    console.log('here i am -------------------------------------');
+    console.log(`${__dirname}/renderer/${urlRequested}`);
+    callback(`${__dirname}/renderer/${urlRequested}`);
+    console.log('here i am -------------------------------------');
   }, (error) => {
     if (error) console.error('Failed to register protocol')
   });
@@ -32,22 +90,25 @@ function showWindow() {
   win = new BrowserWindow({
     width: 1000,
     height: 600,
+    webPreferences: {
+      nodeIntegration: false,
+    },
   });
 
-  ipcMain.on('loaded', () => {
-    const {apiIdentifier, auth0Domain, clientId, clientSecret} = envVariables;
-    win.webContents.send('globalProps', {
-      apiIdentifier,
-      auth0Domain,
-      clientId,
-      clientSecret,
-      customScheme,
-      customDomain,
-    });
-  });
+  const authenticated = false;
+  if (!authenticated) {
 
-  // and load the index.html of the app.
-  win.loadURL(`${customScheme}://${customDomain}/index.html`);
+    const authorizationUrl = 'https://' + auth0Domain + '/authorize?' +
+      'audience=' + apiIdentifier + '&' +
+      'scope=openid profile offline_access&' +
+      'response_type=code&' +
+      'client_id=' + clientId + '&' +
+      'code_challenge=' + challenge + '&' +
+      'code_challenge_method=S256&' +
+      'redirect_uri=' + redirectUri;
+
+    win.loadURL(authorizationUrl);
+  }
 
   // Open the DevTools.
   win.webContents.openDevTools();
@@ -82,3 +143,14 @@ app.on('activate', () => {
     showWindow();
   }
 });
+
+function base64URLEncode(str) {
+  return str.toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+}
+
+function sha256(buffer) {
+  return crypto.createHash('sha256').update(buffer).digest();
+}
