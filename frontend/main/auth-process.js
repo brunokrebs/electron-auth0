@@ -1,9 +1,5 @@
 const {BrowserWindow} = require('electron');
-const envVariables = require('../env-variables');
 const authService = require('../service/auth-service');
-
-const {apiIdentifier, appDomain, appScheme, auth0Domain, clientId} = envVariables;
-const redirectUri = `${appScheme}://${appDomain}/callback`;
 
 module.exports = function loadAuthProcess() {
   // Create the browser window.
@@ -17,16 +13,8 @@ module.exports = function loadAuthProcess() {
 
   const authenticated = false;
   if (!authenticated) {
-    const authorizationUrl = 'https://' + auth0Domain + '/authorize?' +
-      'audience=' + apiIdentifier + '&' +
-      'scope=openid profile offline_access&' +
-      'response_type=code&' +
-      'client_id=' + clientId + '&' +
-      'code_challenge=' + authService.challenge + '&' +
-      'code_challenge_method=S256&' +
-      'redirect_uri=' + redirectUri;
 
-    win.loadURL(authorizationUrl);
+    win.loadURL(authService.getAuthenticationURL());
   }
 
   // Open the DevTools.
