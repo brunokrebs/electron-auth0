@@ -1,3 +1,4 @@
+const axios = require('axios');
 const { ipcRenderer } = require('electron');
 
 ipcRenderer.send('loaded');

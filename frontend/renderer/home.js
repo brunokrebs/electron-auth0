@@ -1,4 +1,6 @@
+const axios = require('axios');
 const { ipcRenderer } = require('electron');
+const jwtDecode = require('jwt-decode');
 
 ipcRenderer.send('loaded');
 
@@ -55,7 +57,7 @@ ipcRenderer.on('globalProps', (event, props) => {
   }
 
   function populateView(idToken, loadedWithRefresh) {
-    const profile = jwt_decode(idToken);
+    const profile = jwtDecode(idToken);
 
     document.getElementById('picture').src = profile.picture;
     document.getElementById('name').innerText = profile.name;
