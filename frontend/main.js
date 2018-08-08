@@ -20,10 +20,10 @@ function showWindow() {
 
     if (url.indexOf('home.html') === 0) {
       // needed, cause Auth0 includes '#code=9Zg...' on the callback URL
-      return callback(`${__dirname}/home.html`);
+      return callback(`${__dirname}/renderer/home.html`);
     }
 
-    callback(`${__dirname}/${url}`);
+    callback(`${__dirname}/renderer/${url}`);
   }, (error) => {
     if (error) console.error('Failed to register protocol')
   });
