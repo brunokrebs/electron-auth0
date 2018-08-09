@@ -48,18 +48,37 @@
 
 ## Creating the Electron Application
 
-> Instruct readers how to create the `frontend` project. In this section, you will have to write about:
+> Instruct readers how to create the `frontend` project.
 
-1. installing `devDependencies`
-2. installing `dependencies`
-3. creating `env-variables.json` file
-4. creating the `./service/store-service.js` file
-5. creating the `./service/auth-service.js` file
-6. creating the `./main/auth-process.js` file
-7. creating the `./main/app-process.js` file
-8. creating the `./main.js` file
-9. creating the `./renderer/home.html` file
-10. creating the `./renderer/home.js` file
-11. creating the `./renderer/home.css` file
+### Installing the Electron App Dependencies
+
+- installing `devDependencies`
+- installing `dependencies`
+
+### Managing Different Environments on the Electron App
+
+- creating `env-variables.json` file
+
+### Persisting Data with the Electron App
+
+- creating the `./service/store-service.js` file
+
+### Connecting the Electron App to Auth0
+
+- creating the `./service/auth-service.js` file
+- creating the `./main/auth-process.js` file
+
+### Creating the Electron App Main Process
+
+- creating the `./main/app-process.js` file
+- creating the `./main.js` file
+
+> Mention why using `custom-scheme` and `custom-domain`
+
+### Creating the Electron App Renderer Process
+
+- creating the `./renderer/home.html` file
+- creating the `./renderer/home.js` file
+- creating the `./renderer/home.css` file
 
 ## Conclusion
