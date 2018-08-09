@@ -1,8 +1,8 @@
 const {app, protocol} = require('electron');
 
 const envVariables = require('./env-variables');
-const {createAuthWin, destroyAuthWin} = require('./main/auth-process');
-const loadAppProcess = require('./main/app-process');
+const {createAuthWindow, destroyAuthWin} = require('./main/auth-process');
+const createAppWindow = require('./main/app-process');
 const authService = require('./service/auth-service');
 
 const {appDomain, appScheme} = envVariables;
@@ -11,7 +11,7 @@ const {appDomain, appScheme} = envVariables;
 // https://electronjs.org/docs/api/protocol#methods
 protocol.registerStandardSchemes([appScheme]);
 
-function showWindow() {
+async function showWindow() {
 
   protocol.registerFileProtocol(appScheme, async (req, callback) => {
     const requestedURL = req.url.replace(`${appScheme}://${appDomain}/`, '').substring(0, req.url.length - 1);
@@ -19,13 +19,20 @@ function showWindow() {
     if (requestedURL.indexOf('callback') === 0) {
       destroyAuthWin();
       await authService.loadTokens(requestedURL);
-      return loadAppProcess();
+      return createAppWindow();
     }
 
     callback(`${__dirname}/renderer/${requestedURL}`);
-  }, console.error);
+  }, (err) => {
+    if (err) return console.error(err);
+  });
 
-  createAuthWin();
+  try {
+    await authService.refreshTokens();
+    return createAppWindow();
+  } catch (err) {
+    createAuthWindow();
+  }
 }
 
 // This method will be called when Electron has finished

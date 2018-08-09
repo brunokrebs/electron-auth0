@@ -8,13 +8,18 @@ const configPath = path.join(userDataPath, 'electron-app-config.json');
 
 let data = null;
 try {
-  data = JSON.parse(fs.readFileSync(filePath));
+  data = JSON.parse(fs.readFileSync(configPath));
 } catch(error) {
   data = {};
 }
 
 function get(key) {
   return data[key];
+}
+
+function remove(key) {
+  delete data[key];
+  fs.writeFileSync(configPath, JSON.stringify(data));
 }
 
 function set(key, val) {
@@ -24,5 +29,6 @@ function set(key, val) {
 
 module.exports = {
   get,
+  remove,
   set,
 };

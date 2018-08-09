@@ -9,7 +9,7 @@ function destroyAuthWin() {
   win = null;
 }
 
-function createAuthWin() {
+function createAuthWindow() {
   destroyAuthWin();
 
   // Create the browser window.
@@ -36,6 +36,6 @@ function createAuthWin() {
 }
 
 module.exports = {
-  createAuthWin,
+  createAuthWindow,
   destroyAuthWin,
 };

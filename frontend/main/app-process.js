@@ -5,7 +5,7 @@ const authService = require('../service/auth-service');
 
 const {appDomain, appScheme} = envVariables;
 
-module.exports = function loadAppProcess() {
+module.exports = function createAppWindow() {
   let win = new BrowserWindow({
     width: 1000,
     height: 600,
@@ -35,7 +35,8 @@ module.exports = function loadAppProcess() {
     });
   });
 
-  ipcMain.on('logout', (event) => {
+  ipcMain.on('logout', () => {
+    authService.logout();
     win.close();
   });
 

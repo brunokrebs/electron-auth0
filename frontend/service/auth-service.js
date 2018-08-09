@@ -23,10 +23,6 @@ function getIdToken() {
   return idToken;
 }
 
-function getRefreshToken() {
-  return refreshToken;
-}
-
 function getAuthenticationURL() {
   return 'https://' + auth0Domain + '/authorize?' +
     'audience=' + apiIdentifier + '&' +
@@ -36,6 +32,36 @@ function getAuthenticationURL() {
     'code_challenge=' + challenge + '&' +
     'code_challenge_method=S256&' +
     'redirect_uri=' + redirectUri;
+}
+
+function refreshTokens() {
+  return new Promise((resolve, reject) => {
+    const refreshToken = storeService.get('refresh-token');
+
+    if (!refreshToken) return reject();
+
+    const refreshOptions = { method: 'POST',
+      url: `https://${auth0Domain}/oauth/token`,
+      headers: { 'content-type': 'application/json' },
+      body: { grant_type: 'refresh_token',
+        client_id: clientId,
+        refresh_token: storeService.get('refresh-token')
+      },
+      json: true,
+    };
+
+    request(refreshOptions, function (error, response, body) {
+      if (error) {
+        logout();
+        return reject();
+      }
+
+      accessToken = body.access_token;
+      idToken = body.id_token;
+
+      resolve();
+    });
+  });
 }
 
 function loadTokens(callbackURL) {
@@ -61,7 +87,10 @@ function loadTokens(callbackURL) {
     };
 
     request(options, (error, resp, body) => {
-      if (error) return reject(error);
+      if (error) {
+        logout();
+        return reject(error);
+      }
 
       const responseBody = JSON.parse(body);
       accessToken = responseBody.access_token;
@@ -73,6 +102,13 @@ function loadTokens(callbackURL) {
       resolve();
     });
   });
+}
+
+function logout() {
+  storeService.remove('refresh-token');
+  accessToken = null;
+  idToken = null;
+  refreshToken = null;
 }
 
 function base64URLEncode(str) {
@@ -90,7 +126,8 @@ module.exports = {
   getAccessToken,
   getAuthenticationURL,
   getIdToken,
-  getRefreshToken,
   loadTokens,
+  logout,
+  refreshTokens,
   verifier,
 };
