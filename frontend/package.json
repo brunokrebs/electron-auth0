@@ -1,5 +1,5 @@
 {
-  "name": "test",
+  "name": "Electron App",
   "version": "1.0.0",
   "description": "",
   "main": "main.js",
@@ -12,10 +12,6 @@
     "electron": "^2.0.2"
   },
   "dependencies": {
-    "axios": "^0.18.0",
-    "electron-store": "^2.0.0",
-    "es6-promise": "^4.2.4",
-    "isomorphic-fetch": "^2.2.1",
     "jwt-decode": "^2.2.0",
     "request": "^2.87.0"
   }
