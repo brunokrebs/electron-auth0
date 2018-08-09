@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const request = require('request');
 const url = require('url');
 const envVariables = require('../env-variables');
+const storeService = require('../service/store-service');
 
 const {apiIdentifier, appDomain, appScheme, auth0Domain, clientId} = envVariables;
 
@@ -66,6 +67,8 @@ function loadTokens(callbackURL) {
       accessToken = responseBody.access_token;
       idToken = responseBody.id_token;
       refreshToken = responseBody.refresh_token;
+
+      storeService.set('refresh-token', refreshToken);
 
       resolve();
     });
