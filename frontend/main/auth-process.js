@@ -1,9 +1,19 @@
 const {BrowserWindow} = require('electron');
 const authService = require('../service/auth-service');
 
-module.exports = function loadAuthProcess() {
+let win = null;
+
+function destroyAuthWin() {
+  if (!win) return;
+  win.close();
+  win = null;
+}
+
+function createAuthWin() {
+  destroyAuthWin();
+
   // Create the browser window.
-  let win = new BrowserWindow({
+  win = new BrowserWindow({
     width: 1000,
     height: 600,
     webPreferences: {
@@ -13,12 +23,12 @@ module.exports = function loadAuthProcess() {
 
   const authenticated = false;
   if (!authenticated) {
-
     win.loadURL(authService.getAuthenticationURL());
   }
 
-  // Open the DevTools.
-  win.webContents.openDevTools();
+  win.on('authenticated', () => {
+    destroyAuthWin();
+  });
 
   // Emitted when the window is closed.
   win.on('closed', () => {
@@ -27,4 +37,9 @@ module.exports = function loadAuthProcess() {
     // when you should delete the corresponding element.
     win = null;
   });
+}
+
+module.exports = {
+  createAuthWin,
+  destroyAuthWin,
 };

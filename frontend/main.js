@@ -1,7 +1,7 @@
 const {app, protocol} = require('electron');
 
 const envVariables = require('./env-variables');
-const loadAuthProcess = require('./main/auth-process');
+const {createAuthWin, destroyAuthWin} = require('./main/auth-process');
 const loadAppProcess = require('./main/app-process');
 const authService = require('./service/auth-service');
 
@@ -17,6 +17,7 @@ function showWindow() {
     const requestedURL = req.url.replace(`${appScheme}://${appDomain}/`, '').substring(0, req.url.length - 1);
 
     if (requestedURL.indexOf('callback') === 0) {
+      destroyAuthWin();
       await authService.loadTokens(requestedURL);
       return loadAppProcess();
     }
@@ -24,7 +25,7 @@ function showWindow() {
     callback(`${__dirname}/renderer/${requestedURL}`);
   }, console.error);
 
-  loadAuthProcess();
+  createAuthWin();
 }
 
 // This method will be called when Electron has finished
