@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const jwtDecode = require('jwt-decode');
 const request = require('request');
 const url = require('url');
 const envVariables = require('../env-variables');
@@ -12,15 +13,15 @@ const verifier = base64URLEncode(crypto.randomBytes(32));
 const challenge = base64URLEncode(sha256(verifier));
 
 let accessToken = null;
-let idToken = null;
+let profile = null;
 let refreshToken = null;
 
 function getAccessToken() {
   return accessToken;
 }
 
-function getIdToken() {
-  return idToken;
+function getProfile() {
+  return profile;
 }
 
 function getAuthenticationURL() {
@@ -57,7 +58,7 @@ function refreshTokens() {
       }
 
       accessToken = body.access_token;
-      idToken = body.id_token;
+      profile = jwtDecode(body.id_token);
 
       resolve();
     });
@@ -94,7 +95,7 @@ function loadTokens(callbackURL) {
 
       const responseBody = JSON.parse(body);
       accessToken = responseBody.access_token;
-      idToken = responseBody.id_token;
+      profile = jwtDecode(responseBody.id_token);
       refreshToken = responseBody.refresh_token;
 
       storeService.set('refresh-token', refreshToken);
@@ -107,7 +108,7 @@ function loadTokens(callbackURL) {
 function logout() {
   storeService.remove('refresh-token');
   accessToken = null;
-  idToken = null;
+  profile = null;
   refreshToken = null;
 }
 
@@ -125,7 +126,7 @@ function sha256(buffer) {
 module.exports = {
   getAccessToken,
   getAuthenticationURL,
-  getIdToken,
+  getProfile,
   loadTokens,
   logout,
   refreshTokens,

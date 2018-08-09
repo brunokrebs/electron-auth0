@@ -17,7 +17,6 @@ async function showWindow() {
     const requestedURL = req.url.replace(`${appScheme}://${appDomain}/`, '').substring(0, req.url.length - 1);
 
     if (requestedURL.indexOf('callback') === 0) {
-      callback(`${__dirname}/renderer/loading.html`);
       await authService.loadTokens(requestedURL);
       createAppWindow();
       return destroyAuthWin();

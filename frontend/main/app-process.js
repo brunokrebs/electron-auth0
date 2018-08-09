@@ -13,7 +13,7 @@ module.exports = function createAppWindow() {
 
   ipcMain.on('loaded', (event) => {
     event.sender.send('load-profile', {
-      idToken: authService.getIdToken(),
+      profile: authService.getProfile(),
     });
   });
 

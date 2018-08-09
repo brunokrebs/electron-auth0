@@ -1,5 +1,4 @@
 const { ipcRenderer } = require('electron');
-const jwtDecode = require('jwt-decode');
 
 ipcRenderer.send('loaded');
 
@@ -12,8 +11,7 @@ document.getElementById('secured-request').onclick = () => {
 };
 
 ipcRenderer.on('load-profile', (event, props) => {
-  const {idToken} = props;
-  const profile = jwtDecode(idToken);
+  const {profile} = props;
 
   document.getElementById('picture').src = profile.picture;
   document.getElementById('name').innerText = profile.name;
