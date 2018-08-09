@@ -17,9 +17,11 @@ ipcRenderer.on('load-profile', (event, props) => {
 
   document.getElementById('picture').src = profile.picture;
   document.getElementById('name').innerText = profile.name;
-  document.getElementById('success').innerText = 'The `access_token` was loaded with the authorization code.';
+  document.getElementById('success').innerText = 'You successfully used OpenID Connect and OAuth 2.0 to authenticate.';
 });
 
 ipcRenderer.on('secured-request-response', (event, props) => {
-  document.getElementById('message').innerText = props.message;
+  const messageJumbotron = document.getElementById('message');
+  messageJumbotron.innerText = props.message;
+  messageJumbotron.style.display = 'block';
 });
