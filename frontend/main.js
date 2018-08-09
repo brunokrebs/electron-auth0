@@ -17,9 +17,10 @@ async function showWindow() {
     const requestedURL = req.url.replace(`${appScheme}://${appDomain}/`, '').substring(0, req.url.length - 1);
 
     if (requestedURL.indexOf('callback') === 0) {
-      destroyAuthWin();
+      callback(`${__dirname}/renderer/loading.html`);
       await authService.loadTokens(requestedURL);
-      return createAppWindow();
+      createAppWindow();
+      return destroyAuthWin();
     }
 
     callback(`${__dirname}/renderer/${requestedURL}`);
@@ -42,11 +43,7 @@ app.on('ready', showWindow);
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
-  // On macOS it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+  app.quit();
 });
 
 app.on('activate', () => {

@@ -21,10 +21,7 @@ function createAuthWindow() {
     },
   });
 
-  const authenticated = false;
-  if (!authenticated) {
-    win.loadURL(authService.getAuthenticationURL());
-  }
+  win.loadURL(authService.getAuthenticationURL());
 
   win.on('authenticated', () => {
     destroyAuthWin();
